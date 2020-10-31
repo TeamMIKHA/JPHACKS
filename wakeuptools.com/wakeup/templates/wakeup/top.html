@@ -1,0 +1,64 @@
+{% extends 'wakeup/base.html' %}
+{% load static %}
+
+{% block title %}WAKE UP SCHEDULE{% endblock %}
+
+{%block content %}
+<h1>折れ線グラフ</h1>
+  <canvas id="myLineChart"></canvas>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+
+  <script>
+  var ctx = document.getElementById("myLineChart");
+  var myLineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{xlabels|safe}},
+      datasets: [
+        {
+          label: '起床時間',
+          data: {{data|safe}},
+          borderColor: "rgba(255,0,0,1)",
+          backgroundColor: "rgba(0,0,0,0)"
+        },
+        {
+          label: '目標起床時間',
+          data: {{idea_time|safe}},
+          borderColor: "rgba(0,0,255,1)",
+          backgroundColor: "rgba(0,0,0,0)"
+        }
+      ],
+    },
+    options: {
+      title: {
+        display: true,
+        text: '気温（8月1日~8月7日）'
+      },
+      scales: {
+        yAxes: [{
+          ticks: {
+            suggestedMax: 40,
+            suggestedMin: 0,
+            stepSize: 10,
+            callback: function(value, index, values){
+              return  value +  '度'
+            }
+          }
+        }]
+      },
+    }
+  });
+  </script>
+  <link rel="stylesheet" href="{% static 'css/top.css' %}">
+  <body class="top_body">
+    <div class="contents">
+      <h1>{{ name }}についての概要</h1>
+      <p>東京に住んでる、40歳になったエンジニアです。</p>
+
+      <h2>趣味</h2>
+      <ul>
+        <li>映画鑑賞</li>
+      </ul>
+    </div>
+  </body>
+{% endblock %}

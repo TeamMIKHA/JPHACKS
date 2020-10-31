@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+</head>
+
+<body>
+  <header class="site-header">
+    <h1 class="site-logo"><a href="{% url 'wakeup:top' %}"><img src="{% static 'img/logo.png' %}" alt="WAKEUPLOGO"></a></h1>
+    <nav class="gnav">
+      <ul class="gnav__menu">
+        <li class="gnav__menu__item"><a href="{% url 'wakeup:top' %}">TOP</a></li>
+        <li class="gnav__menu__item"><a href="{% url 'wakeup:month_with_schedule' %}">SCHEDULE</a></li>
+        <li class="gnav__menu__item"><a href="{% url 'wakeup:howto' %}">HOW TO WAKE UP</a></li>
+      </ul>
+    </nav>
+  </header>
+{% block content %}{% endblock %}
+</body>
+</html>

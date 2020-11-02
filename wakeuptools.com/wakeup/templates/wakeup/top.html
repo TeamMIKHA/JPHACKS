@@ -4,61 +4,97 @@
 {% block title %}WAKE UP SCHEDULE{% endblock %}
 
 {%block content %}
-<h1>折れ線グラフ</h1>
-  <canvas id="myLineChart"></canvas>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+<body id="top_body">
+  <div class="contents">
+    <form action="/" method="POST">
+        {% csrf_token %}
+        <input type='hidden' name="day_week_month" value={{day_week_month}}/>
+        <input type='hidden' name="absolute_or_relative" value={{absolute_or_relative}}/>
+        <input type='hidden' name="standard_date" value={{standard_date}}/>
 
+        <input type="submit" value="absolute" name='absolute_button' id="absolute_button_id">
+        <input type="submit" value="relative" name='relative_button' id="relative_button_id">
+        <input type="submit" value="month" name='month_button' id="month_button_id">
+        <input type="submit" value="week" name='week_button' id="week_button_id">
+        <input type="submit" value="day" name='day_button' id="day_button_id">
+        <input type="submit" value="next" name='next_button' id="next_button_id">
+        <input type="submit" value="before" name='before_button' id="before_button_id">
+    </form>
+
+    <canvas id="myLineChart"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+  </div>
+</body>
   <script>
+  let Y_data = {{Y_data|safe}}
+  let ideal = {{ideal|safe}}
+  for (var i=0 ;i < Y_data.length;i++){
+    if(Y_data[i] == ""){
+      Y_data[i] =null;
+    }
+    if(ideal[i] == ""){
+      ideal[i]=null
+    }
+  }
+  var datasets = [
+    {
+      label: '起床時間',
+      data: Y_data,
+      borderColor: "rgba(255,0,0,1)",
+      backgroundColor: "rgba(0,0,0,0)",
+
+    },
+    {
+      label: '目標起床時間',
+      data:ideal ,
+      borderColor: "rgba(0,0,255,1)",
+      backgroundColor: "rgba(0,0,0,0)"
+    }
+  ]
+
+
   var ctx = document.getElementById("myLineChart");
   var myLineChart = new Chart(ctx, {
+    showTooltips: true,
     type: 'line',
     data: {
       labels: {{xlabels|safe}},
-      datasets: [
-        {
-          label: '起床時間',
-          data: {{data|safe}},
-          borderColor: "rgba(255,0,0,1)",
-          backgroundColor: "rgba(0,0,0,0)"
-        },
-        {
-          label: '目標起床時間',
-          data: {{idea_time|safe}},
-          borderColor: "rgba(0,0,255,1)",
-          backgroundColor: "rgba(0,0,0,0)"
-        }
-      ],
+      datasets: datasets ,
     },
     options: {
+      spanGaps: true,
       title: {
         display: true,
         text: '気温（8月1日~8月7日）'
-      },
+      }
+
+      ,
       scales: {
-        yAxes: [{
-          ticks: {
-            suggestedMax: 40,
-            suggestedMin: 0,
-            stepSize: 10,
-            callback: function(value, index, values){
-              return  value +  '度'
+        yAxes: [
+          {
+            ticks: {
+              min: {{min_score}},
+              max: {{max_score}},
+
+              callback: function(value, index, values) {
+              {% if absolute_or_relative == 'absolute' %}
+                if (value%60==0){
+                  return String((value-value%60)/60) +':'+String(value%60)+"0";
+                }
+                  return String((value-value%60)/60) +':'+String(value%60);
+              }
+              {% else %}
+                return String(value) +'分';
+              }
+              {% endif %}
+
             }
           }
-        }]
+        ]
       },
     }
   });
   </script>
   <link rel="stylesheet" href="{% static 'css/top.css' %}">
-  <body class="top_body">
-    <div class="contents">
-      <h1>{{ name }}についての概要</h1>
-      <p>東京に住んでる、40歳になったエンジニアです。</p>
 
-      <h2>趣味</h2>
-      <ul>
-        <li>映画鑑賞</li>
-      </ul>
-    </div>
-  </body>
 {% endblock %}

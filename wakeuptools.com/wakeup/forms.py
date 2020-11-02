@@ -1,5 +1,5 @@
 from django import forms
-from .models import Schedule,Options
+from .models import Schedule
 
 
 class BS4ScheduleForm(forms.ModelForm):
@@ -43,10 +43,3 @@ class SimpleScheduleForm(forms.ModelForm):
             }),
             'date': forms.HiddenInput,
         }
-
-class OptionsForm(forms.ModelForm):
-    category = forms.ModelChoiceField(queryset=Options.objects.all())
-
-    class Meta:
-        model = Options
-        fields = ('default_alarm', 'default_time', 'method_servo', 'method_sound',)

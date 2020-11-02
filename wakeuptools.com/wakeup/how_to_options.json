@@ -1,1 +1,26 @@
-{"default_alarm": "on", "default_time": {"all":{"switch":"on","time":"7:00:00"},"holiday":{"switch":"off","time":"7:00:00"},"weekdays":{"switch":"off","time":"7:00:00"},"day_of_the_week":{"switch":"off","day":{"sunday":{"switch":"off","time":"7:00:00"},"monday":{"switch":"off","time":"7:00:00"},"tuesday":{"switch":"off","time":"7:00:00"},"wednesday":{"switch":"off","time":"7:00:00"},"thursday":{"switch":"off","time":"7:00:00"},"friday":{"switch":"off","time":"7:00:00"},"suturday":{"switch":"off","time":"7:00:00"}}}},"use_servo":"on","use_sound":"on"}
+{
+    "default_alarm": "off",
+    "all_switch": "off",
+    "all_time": "07:00",
+    "holiday_switch": "off",
+    "holiday_time": "07:00",
+    "weekdays_switch": "on",
+    "weekdays_time": "07:00",
+    "day_of_the_week": "off",
+    "sunday_switch": "off",
+    "sunday_time": "07:00",
+    "monday_switch": "off",
+    "monday_time": "20:30",
+    "tuesday_switch": "off",
+    "tuesday_time": "08:00",
+    "wednesday_switch": "off",
+    "wednesday_time": "07:00",
+    "thursday_switch": "off",
+    "thursday_time": "07:00",
+    "friday_switch": "off",
+    "friday_time": "07:00",
+    "saturday_switch": "off",
+    "saturday_time": "07:00",
+    "use_servo": "off",
+    "use_sound": "off"
+}

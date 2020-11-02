@@ -1,11 +1,12 @@
 import datetime
 from django.shortcuts import redirect, render
 from django.views import generic
-from .forms import BS4ScheduleForm, SimpleScheduleForm,OptionsForm
-from .models import Schedule, Options
+from .forms import BS4ScheduleForm, SimpleScheduleForm
+from .models import Schedule
 from . import mixins
 import json
 from django.views import View
+from dateutil.relativedelta import relativedelta
 
 class MonthCalendar(mixins.MonthCalendarMixin, generic.TemplateView):
     """月間カレンダーを表示するビュー"""
@@ -106,36 +107,203 @@ class MonthWithFormsCalendar(mixins.MonthWithFormsMixin, generic.View):
         return render(request, self.template_name, context)
 
 # Create your views here.
-def top(request):
-    json_open = open('wakeup/options.json', 'r')
-    json_load = json.load(json_open)
-    if json_load['day_week_year']=='day':
-        xlabel_name = []
-        if json_load['absolute_or_relative'] == 'absolute':
-            y_data = []
-        else:
-            y_data = []
-    elif json_load['day_week_year']=='week':
-        xlabel_name = []
-        if json_load['absolute_or_relative'] == 'absolute':
-            y_data = []
-        else:
-            y_data = []
-    else:
-        xlabel_name = []
-        if json_load['absolute_or_relative'] == 'absolute':
-            y_data = []
-        else:
-            y_data = []
+class TopView(View):
+    def get(self, request, *args, **kwargs):
+        json_open = open('wakeup/options.json', 'r')
+        json_load = json.load(json_open)
+        now_date =datetime.datetime.now()
+        context = self.get_context_data(now_date,json_load['absolute_or_relative'], json_load['day_week_month'])
 
-    idea_times = []
+        return render(request, 'wakeup/top.html', context)
 
-    context = {
-            'xlabels': xlabel_name,
-            'data':y_data,
-            'idea_time':idea_times,
-    }
-    return render(request, 'wakeup/top.html', context)
+    def post(self, request, *args, **kwargs):
+        standard_date = datetime.datetime.strptime(request.POST.get('standard_date',""), '%Y--%m--%d/')
+        if 'absolute_button' in request.POST:
+            context = self.get_context_data(standard_date, "absolute", request.POST.get('day_week_month',"day"))
+        elif 'relative_button' in request.POST:
+            context = self.get_context_data(standard_date, "relative", request.POST.get('day_week_month',"day"))
+        elif 'day_button' in request.POST:
+            context = self.get_context_data(standard_date, request.POST.get('absolute_or_relative',"relative"), 'day')
+        elif 'week_button' in request.POST:
+            context = self.get_context_data(standard_date, request.POST.get('absolute_or_relative',"relative"), 'week')
+        elif 'month_button' in request.POST:
+            context = self.get_context_data(standard_date, request.POST.get('absolute_or_relative',"relative"), 'month')
+        elif 'next_button' in request.POST:
+            print('a')
+            if request.POST.get('day_week_month',"") =='day':
+                standard_date =  standard_date - relativedelta(days=10)
+                print('b')
+            elif request.POST.get('day_week_month',"") =='week':
+                print("c")
+                standard_date =  standard_date - relativedelta(weeks=10)
+            elif request.POST.get('day_week_month',"") =='month':
+                print("d")
+                standard_date =  standard_date - relativedelta(months=10)
+
+            context = self.get_context_data(standard_date, request.POST.get('absolute_or_relative',"relative"), request.POST.get('day_week_month',"day"))
+        elif 'before_button' in request.POST:
+            context = self.get_context_data(standard_date, request.POST.get('absolute_or_relative',"relative"),request.POST.get('day_week_month',"day"))
+
+        return render(request, 'wakeup/top.html', context)
+
+    def get_context_data(self,standard_date,absolute_or_relative,day_week_month):
+        y_data = []
+        ideal_times = []
+        max_score = 0
+        min_score = 0
+        if day_week_month=='day':
+            xlabel_name = [str((standard_date - datetime.timedelta(days=i)).month) + '/'
+                        + str((standard_date - datetime.timedelta(days=i)).day) for i in reversed(range(10))]
+            date_name = [Schedule.objects.filter(date=datetime.datetime((standard_date - datetime.timedelta(days=i)).year,\
+            (standard_date - datetime.timedelta(days=i)).month,(standard_date - datetime.timedelta(days=i)).day)) for i in reversed(range(10))]
+            for query_set in date_name:
+                if absolute_or_relative == 'absolute':
+                    if len(query_set)==0:
+                        y_data.append("")
+                        ideal_times.append("")
+                    else:
+                        #print(query_set[0].end_time)
+                        absolute_time = query_set[0].end_time.hour * 60 + query_set[0].end_time.minute
+                        y_data.append(absolute_time)
+                        ideal_score = query_set[0].start_time.hour * 60 + query_set[0].start_time.minute
+                        ideal_times.append(ideal_score)
+                        if min_score == 0:
+                            min_score =absolute_time
+                        if max_score < absolute_time:
+                            max_score = absolute_time
+                        elif min_score > absolute_time:
+                            min_score = absolute_time
+                        if max_score < ideal_score:
+                            max_score = ideal_score
+                        elif min_score > ideal_score:
+                            min_score = ideal_score
+                else:
+                    ideal_times.append(0)
+                    if len(query_set)==0:
+                        y_data.append("")
+                    else:
+                        week_score = []
+                        for week_query in query_set:
+                            relative_time =int((datetime.datetime.strptime(str(week_query.end_time),"%H:%M:%S") - \
+                                                datetime.datetime.strptime(str(week_query.start_time),"%H:%M:%S")).total_seconds())
+                            relative_time = int(relative_time/60)
+                            week_score.append(relative_time)
+                        average_score = sum(week_score)//len(week_score)
+
+                        if min_score > average_score:
+                            min_score = average_score
+                        elif max_score < average_score:
+                            max_score = average_score
+                        y_data.append(average_score)
+
+
+        elif day_week_month=='week':
+            xlabel_name = [str((standard_date - datetime.timedelta(weeks=i)).month) + '/'  \
+                        + str((standard_date - datetime.timedelta(weeks=i)).day) for i in reversed(range(10))]
+            date_name = [Schedule.objects.filter(date__range=[datetime.datetime((standard_date - datetime.timedelta(days=6,weeks=i)).year,\
+                        (standard_date - datetime.timedelta(days=6,weeks=i)).month,(standard_date - datetime.timedelta(days=6,weeks=i)).day),\
+                        datetime.datetime((standard_date - datetime.timedelta(days=-1,weeks=i)).year,\
+                        (standard_date - datetime.timedelta(days=-1,weeks=i)).month,(standard_date - datetime.timedelta(days=-1,weeks=i)).day)]) for i in reversed(range(10))]
+
+            for query_set in date_name:
+                if absolute_or_relative == 'absolute':
+                    if len(query_set)==0:
+                        y_data.append("")
+                        ideal_times.append("")
+                    else:
+                        #print(query_set[0].end_time)
+                        absolute_time = query_set[0].end_time.hour * 60 + query_set[0].end_time.minute
+                        y_data.append(absolute_time)
+                        ideal_score = query_set[0].start_time.hour * 60 + query_set[0].start_time.minute
+                        ideal_times.append(ideal_score)
+                        if min_score == 0:
+                            min_score =absolute_time
+                        if max_score < absolute_time:
+                            max_score = absolute_time
+                        elif min_score > absolute_time:
+                            min_score = absolute_time
+                        if max_score < ideal_score:
+                            max_score = ideal_score
+                        elif min_score > ideal_score:
+                            min_score = ideal_score
+                else:
+                    #print(query_set)
+                    ideal_times.append(0)
+                    if len(query_set)==0:
+                        y_data.append("")
+                    else:
+                        week_score = []
+                        for week_query in query_set:
+                            relative_time =int((datetime.datetime.strptime(str(week_query.end_time),"%H:%M:%S") - \
+                                                datetime.datetime.strptime(str(week_query.start_time),"%H:%M:%S")).total_seconds())
+                            relative_time = int(relative_time/60)
+                            week_score.append(relative_time)
+                        average_score = sum(week_score)//len(week_score)
+
+                        if min_score > average_score:
+                            min_score = average_score
+                        elif max_score < average_score:
+                            max_score = average_score
+                        y_data.append(average_score)
+        else:
+            xlabel_name = [str((standard_date - relativedelta(months=i)).month) + '月' for i in reversed(range(10))]
+            date_name = [Schedule.objects.filter(date__year=str((standard_date - relativedelta(months=i)).year),date__month=str((standard_date - relativedelta(months=i)).month)) for i in reversed(range(10))]
+
+            for query_set in date_name:
+                if absolute_or_relative == 'absolute':
+                    if len(query_set)==0:
+                        y_data.append("")
+                        ideal_times.append("")
+                    else:
+
+                        absolute_time = query_set[0].end_time.hour * 60 + query_set[0].end_time.minute
+                        y_data.append(absolute_time)
+                        ideal_score = query_set[0].start_time.hour * 60 + query_set[0].start_time.minute
+                        ideal_times.append(ideal_score)
+                        if min_score == 0:
+                            min_score =absolute_time
+                        if max_score < absolute_time:
+                            max_score = absolute_time
+                        elif min_score > absolute_time:
+                            min_score = absolute_time
+                        if max_score < ideal_score:
+                            max_score = ideal_score
+                        elif min_score > ideal_score:
+                            min_score = ideal_score
+                else:
+                    ideal_times.append(0)
+                    if len(query_set)==0:
+                        y_data.append("")
+                    else:
+                        week_score = []
+                        #print(query_set)
+                        #print(query_set[3].end_time)
+                        for week_query in query_set:
+                            try:
+                                relative_time =int((datetime.datetime.strptime(str(week_query.end_time),"%H:%M:%S") - \
+                                                    datetime.datetime.strptime(str(week_query.start_time),"%H:%M:%S")).total_seconds())
+                                relative_time = int(relative_time/60)
+                                week_score.append(relative_time)
+                            except:
+                                pass
+                        average_score = sum(week_score)//len(week_score)
+                        if min_score > average_score:
+                            min_score = average_score
+                        elif max_score < average_score:
+                            max_score = average_score
+                        y_data.append(average_score)
+
+        context = {
+                'xlabels': xlabel_name,
+                'Y_data':y_data,
+                'ideal':ideal_times,
+                'max_score':max_score+60,
+                'min_score':min_score-60,
+                'absolute_or_relative': absolute_or_relative,
+                'day_week_month':day_week_month,
+                'standard_date':standard_date.strftime('%Y--%m--%d'),
+        }
+        return context
 
 
 
@@ -144,63 +312,65 @@ class HowToView(View):
         json_open = open('wakeup/how_to_options.json', 'r')
         json_load = json.load(json_open)
         context = {
-            'default_alarm': 'on',
-            'all_switch':'on' ,
-            'all_time':'07:00:00',
-            'holiday_switch':'off',
-            'holiday_time':'07:00:00',
-            'weekdays_switch':'off',
-            'weekdays_time':'07:00:00',
-            'day_of_the_week':'off',
-            'sunday_switch':'off',
-            'sunday_time':'07:00:00',
-            'monday_switch':'off',
-            'monday_time':'07:00:00',
-            'tuesday_switch':'off',
-            'tuesday_time':'07:00:00',
-            'wednesday_switch':'off',
-            'wednesday_time':'07:00:00',
-            'thursday_switch':'off',
-            'thursday_time':'07:00:00',
-            'friday_switch':'off',
-            'friday_time':'07:00:00',
-            'saturday_switch':'off',
-            'saturday_time':'07:00:00',
-            'use_servo':'on',
-            'use_sound':'on',
+            'default_alarm': json_load['default_alarm'],
+            'all_switch':json_load['all_switch'] ,
+            'all_time':json_load['all_time'],
+            'holiday_switch':json_load['holiday_switch'],
+            'holiday_time':json_load['holiday_time'],
+            'weekdays_switch':json_load['weekdays_switch'],
+            'weekdays_time':json_load['weekdays_time'],
+            'day_of_the_week':json_load['day_of_the_week'],
+            'sunday_switch':json_load['sunday_switch'],
+            'sunday_time':json_load['sunday_time'],
+            'monday_switch':json_load['monday_switch'],
+            'monday_time':json_load['monday_time'],
+            'tuesday_switch':json_load['tuesday_switch'],
+            'tuesday_time':json_load['tuesday_time'],
+            'wednesday_switch':json_load['wednesday_switch'],
+            'wednesday_time':json_load['wednesday_time'],
+            'thursday_switch':json_load['thursday_switch'],
+            'thursday_time':json_load['thursday_time'],
+            'friday_switch':json_load['friday_switch'],
+            'friday_time':json_load['friday_time'],
+            'saturday_switch':json_load['saturday_switch'],
+            'saturday_time':json_load['saturday_time'],
+            'use_servo':json_load['use_servo'],
+            'use_sound':json_load['use_sound'],
         }
         return render(request, 'wakeup/howto.html/', context)
 
     def post(self, request, *args, **kwargs):
-        print("dhahdahafhfiahih")
-        print(request.POST.get('use_servo',None))
+
+        json_open = open('wakeup/how_to_options.json', 'r')
+        json_load = json.load(json_open)
         context = {
-            'default_alarm': request.POST['default_alarm'],
-            'all_switch':'on' ,
-            'all_time':'07:00:00',
-            'holiday_switch':'off',
-            'holiday_time':'07:00:00',
-            'weekdays_switch':'off',
-            'weekdays_time':'07:00:00',
-            'day_of_the_week':'off',
-            'sunday_switch':'off',
-            'sunday_time':'07:00:00',
-            'monday_switch':'off',
-            'monday_time':'07:00:00',
-            'tuesday_switch':'off',
-            'tuesday_time':'07:00:00',
-            'wednesday_switch':'off',
-            'wednesday_time':'07:00:00',
-            'thursday_switch':'off',
-            'thursday_time':'07:00:00',
-            'friday_switch':'off',
-            'friday_time':'07:00:00',
-            'saturday_switch':'off',
-            'saturday_time':'07:00:00',
-            'use_servo':'on',
-            'use_sound':'on',
+            'default_alarm': request.POST.get('default_alarm',"off"),
+            'all_switch':request.POST.get('all_switch','off') ,
+            'all_time':request.POST.get('all_time',json_load['all_time']),
+            'holiday_switch':request.POST.get('holiday_switch',"off"),
+            'holiday_time':request.POST.get('holiday_time',json_load['holiday_time']),
+            'weekdays_switch':request.POST.get('weekdays_switch',"off"),
+            'weekdays_time':request.POST.get('weekdays_time',json_load['weekdays_time']),
+            'day_of_the_week':request.POST.get('day_of_the_week',"off"),
+            'sunday_switch':request.POST.get('sunday_switch',"off"),
+            'sunday_time':request.POST.get('sunday_time',json_load['sunday_time']),
+            'monday_switch':request.POST.get('monday_switch',"off"),
+            'monday_time':request.POST.get('monday_time',json_load['monday_time']),
+            'tuesday_switch':request.POST.get('tuesday_switch',"off"),
+            'tuesday_time':request.POST.get('tuesday_time',json_load['tuesday_time']),
+            'wednesday_switch':request.POST.get('wednesday_switch',"off"),
+            'wednesday_time':request.POST.get('wednesday_time',json_load['wednesday_time']),
+            'thursday_switch':request.POST.get('thursday_switch',"off"),
+            'thursday_time':request.POST.get('thursday_time',json_load['thursday_time']),
+            'friday_switch':request.POST.get('friday_switch',"off"),
+            'friday_time':request.POST.get('friday_time',json_load['friday_time']),
+            'saturday_switch':request.POST.get('saturday_switch',"off"),
+            'saturday_time':request.POST.get('saturday_time',json_load['saturday_time']),
+            'use_servo':request.POST.get('use_servo',"off"),
+            'use_sound':request.POST.get('use_sound',"off"),
         }
+        with open('wakeup/how_to_options.json', 'w') as f:
+            json.dump(context, f, indent=4)
         return render(request, 'wakeup/howto.html/', context)
-
-
+top = TopView.as_view()
 howto = HowToView.as_view()

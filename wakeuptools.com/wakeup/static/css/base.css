@@ -2,7 +2,6 @@
   margin: 0px;
   padding: 0px;
 }
-
 body {
   background: #fff;
 }
@@ -16,7 +15,7 @@ header{
 }
 
 .site-header{
-    background: #81bcd8;
+    background: #fdfdff;
     display: flex;
     justify-content: space-between;
     width: 100%;
@@ -30,19 +29,29 @@ header{
     padding-right: 0px;
     width: auto;
 }
+
 .gnav__menu{
     padding-left: 0px;
     padding-top: 20px;
     padding-right: 20px;
     padding-bottom: 0px;
-    font-size: 25px;
     display: flex;
 }
 .gnav__menu__item{
     margin-left: 80px;
+    margin-right: 20px;
 }
 
-a {
-  color: #000;
+
+#top_id,#schedule_id, #options_id {
+  color: #777777;
+  font-family:'Gautami';
+  font-size: 30px;
   text-decoration: none;
+}
+
+a#logo_id{
+  position: absolute;
+  top: 0px;
+  height: 80px;
 }

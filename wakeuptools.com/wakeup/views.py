@@ -118,31 +118,42 @@ class TopView(View):
 
     def post(self, request, *args, **kwargs):
         standard_date = datetime.datetime.strptime(request.POST.get('standard_date',""), '%Y--%m--%d/')
-        if 'absolute_button' in request.POST:
-            context = self.get_context_data(standard_date, "absolute", request.POST.get('day_week_month',"day"))
-        elif 'relative_button' in request.POST:
-            context = self.get_context_data(standard_date, "relative", request.POST.get('day_week_month',"day"))
+        abs_or_rela = request.POST.get('absolute_or_relative',"relative").translate(request.POST.get('absolute_or_relative',"relative").maketrans({'/': ''}))
+        dwm = request.POST.get('day_week_month',"day").translate(request.POST.get('day_week_month',"day").maketrans({'/': ''}))
+        print(request.POST)
+        if 'absolute' in request.POST.get('ab_or_re',""):
+            context = self.get_context_data(standard_date, "absolute", dwm)
+        elif 'relative' in request.POST.get('ab_or_re',""):
+            context = self.get_context_data(standard_date, "relative", dwm)
         elif 'day_button' in request.POST:
-            context = self.get_context_data(standard_date, request.POST.get('absolute_or_relative',"relative"), 'day')
+            context = self.get_context_data(standard_date, abs_or_rela, 'day')
         elif 'week_button' in request.POST:
-            context = self.get_context_data(standard_date, request.POST.get('absolute_or_relative',"relative"), 'week')
+            context = self.get_context_data(standard_date, abs_or_rela, 'week')
         elif 'month_button' in request.POST:
-            context = self.get_context_data(standard_date, request.POST.get('absolute_or_relative',"relative"), 'month')
+            context = self.get_context_data(standard_date, abs_or_rela, 'month')
         elif 'next_button' in request.POST:
-            print('a')
-            if request.POST.get('day_week_month',"") =='day':
-                standard_date =  standard_date - relativedelta(days=10)
-                print('b')
-            elif request.POST.get('day_week_month',"") =='week':
-                print("c")
-                standard_date =  standard_date - relativedelta(weeks=10)
-            elif request.POST.get('day_week_month',"") =='month':
-                print("d")
-                standard_date =  standard_date - relativedelta(months=10)
-
-            context = self.get_context_data(standard_date, request.POST.get('absolute_or_relative',"relative"), request.POST.get('day_week_month',"day"))
+            print(request.POST.get('day_week_month',""))
+            if 'day' in request.POST.get('day_week_month',""):
+                standard_date =  standard_date + relativedelta(days=10)
+            elif 'week' in request.POST.get('day_week_month',""):
+                standard_date =  standard_date + relativedelta(weeks=10)
+            elif 'month' in request.POST.get('day_week_month',""):
+                standard_date =  standard_date + relativedelta(months=10)
+            context = self.get_context_data(standard_date, abs_or_rela, dwm)
         elif 'before_button' in request.POST:
-            context = self.get_context_data(standard_date, request.POST.get('absolute_or_relative',"relative"),request.POST.get('day_week_month',"day"))
+            if 'day' in request.POST.get('day_week_month',""):
+                standard_date =  standard_date - relativedelta(days=10)
+            elif 'week' in request.POST.get('day_week_month',""):
+                standard_date =  standard_date - relativedelta(weeks=10)
+            elif 'month' in request.POST.get('day_week_month',""):
+                standard_date =  standard_date - relativedelta(months=10)
+            context = self.get_context_data(standard_date, abs_or_rela, dwm)
+        else:
+            context = self.get_context_data(standard_date, abs_or_rela, dwm)
+        #print(context)
+        with open('wakeup/options.json', 'w') as f:
+            json.dump(context, f, indent=4)
+        #print(context)
 
         return render(request, 'wakeup/top.html', context)
 
@@ -163,20 +174,26 @@ class TopView(View):
                         ideal_times.append("")
                     else:
                         #print(query_set[0].end_time)
-                        absolute_time = query_set[0].end_time.hour * 60 + query_set[0].end_time.minute
-                        y_data.append(absolute_time)
-                        ideal_score = query_set[0].start_time.hour * 60 + query_set[0].start_time.minute
-                        ideal_times.append(ideal_score)
-                        if min_score == 0:
-                            min_score =absolute_time
-                        if max_score < absolute_time:
-                            max_score = absolute_time
-                        elif min_score > absolute_time:
-                            min_score = absolute_time
-                        if max_score < ideal_score:
-                            max_score = ideal_score
-                        elif min_score > ideal_score:
-                            min_score = ideal_score
+                        try:
+                            absolute_time = query_set[0].end_time.hour * 60 + query_set[0].end_time.minute
+                            y_data.append(absolute_time)
+                            ideal_score = query_set[0].start_time.hour * 60 + query_set[0].start_time.minute
+                            ideal_times.append(ideal_score)
+                            if min_score == 0:
+                                min_score =absolute_time
+                            if max_score < absolute_time:
+                                max_score = absolute_time
+                            elif min_score > absolute_time:
+                                min_score = absolute_time
+                            if max_score < ideal_score:
+                                max_score = ideal_score
+                            elif min_score > ideal_score:
+                                min_score = ideal_score
+                        except :
+                            y_data.append("")
+                            ideal_times.append("")
+
+
                 else:
                     ideal_times.append(0)
                     if len(query_set)==0:
@@ -184,11 +201,17 @@ class TopView(View):
                     else:
                         week_score = []
                         for week_query in query_set:
-                            relative_time =int((datetime.datetime.strptime(str(week_query.end_time),"%H:%M:%S") - \
-                                                datetime.datetime.strptime(str(week_query.start_time),"%H:%M:%S")).total_seconds())
-                            relative_time = int(relative_time/60)
-                            week_score.append(relative_time)
-                        average_score = sum(week_score)//len(week_score)
+                            try:
+                                relative_time =int((datetime.datetime.strptime(str(week_query.end_time),"%H:%M:%S") - \
+                                                    datetime.datetime.strptime(str(week_query.start_time),"%H:%M:%S")).total_seconds())
+                                relative_time = int(relative_time/60)
+                                week_score.append(relative_time)
+                            except:
+                                pass
+                        if len(week_score)!=0:
+                            average_score = sum(week_score)//len(week_score)
+                        else:
+                            average_score = 0
 
                         if min_score > average_score:
                             min_score = average_score
@@ -212,20 +235,24 @@ class TopView(View):
                         ideal_times.append("")
                     else:
                         #print(query_set[0].end_time)
-                        absolute_time = query_set[0].end_time.hour * 60 + query_set[0].end_time.minute
-                        y_data.append(absolute_time)
-                        ideal_score = query_set[0].start_time.hour * 60 + query_set[0].start_time.minute
-                        ideal_times.append(ideal_score)
-                        if min_score == 0:
-                            min_score =absolute_time
-                        if max_score < absolute_time:
-                            max_score = absolute_time
-                        elif min_score > absolute_time:
-                            min_score = absolute_time
-                        if max_score < ideal_score:
-                            max_score = ideal_score
-                        elif min_score > ideal_score:
-                            min_score = ideal_score
+                        try:
+                            absolute_time = query_set[0].end_time.hour * 60 + query_set[0].end_time.minute
+                            y_data.append(absolute_time)
+                            ideal_score = query_set[0].start_time.hour * 60 + query_set[0].start_time.minute
+                            ideal_times.append(ideal_score)
+                            if min_score == 0:
+                                min_score =absolute_time
+                            if max_score < absolute_time:
+                                max_score = absolute_time
+                            elif min_score > absolute_time:
+                                min_score = absolute_time
+                            if max_score < ideal_score:
+                                max_score = ideal_score
+                            elif min_score > ideal_score:
+                                min_score = ideal_score
+                        except:
+                            y_data.append("")
+                            ideal_times.append("")
                 else:
                     #print(query_set)
                     ideal_times.append(0)
@@ -234,12 +261,17 @@ class TopView(View):
                     else:
                         week_score = []
                         for week_query in query_set:
-                            relative_time =int((datetime.datetime.strptime(str(week_query.end_time),"%H:%M:%S") - \
-                                                datetime.datetime.strptime(str(week_query.start_time),"%H:%M:%S")).total_seconds())
-                            relative_time = int(relative_time/60)
-                            week_score.append(relative_time)
-                        average_score = sum(week_score)//len(week_score)
-
+                            try:
+                                relative_time =int((datetime.datetime.strptime(str(week_query.end_time),"%H:%M:%S") - \
+                                                    datetime.datetime.strptime(str(week_query.start_time),"%H:%M:%S")).total_seconds())
+                                relative_time = int(relative_time/60)
+                                week_score.append(relative_time)
+                            except:
+                                pass
+                        if len(week_score)!=0:
+                            average_score = sum(week_score)//len(week_score)
+                        else:
+                            average_score = 0
                         if min_score > average_score:
                             min_score = average_score
                         elif max_score < average_score:
@@ -248,28 +280,30 @@ class TopView(View):
         else:
             xlabel_name = [str((standard_date - relativedelta(months=i)).month) + '月' for i in reversed(range(10))]
             date_name = [Schedule.objects.filter(date__year=str((standard_date - relativedelta(months=i)).year),date__month=str((standard_date - relativedelta(months=i)).month)) for i in reversed(range(10))]
-
             for query_set in date_name:
                 if absolute_or_relative == 'absolute':
                     if len(query_set)==0:
                         y_data.append("")
                         ideal_times.append("")
                     else:
-
-                        absolute_time = query_set[0].end_time.hour * 60 + query_set[0].end_time.minute
-                        y_data.append(absolute_time)
-                        ideal_score = query_set[0].start_time.hour * 60 + query_set[0].start_time.minute
-                        ideal_times.append(ideal_score)
-                        if min_score == 0:
-                            min_score =absolute_time
-                        if max_score < absolute_time:
-                            max_score = absolute_time
-                        elif min_score > absolute_time:
-                            min_score = absolute_time
-                        if max_score < ideal_score:
-                            max_score = ideal_score
-                        elif min_score > ideal_score:
-                            min_score = ideal_score
+                        try:
+                            absolute_time = query_set[0].end_time.hour * 60 + query_set[0].end_time.minute
+                            y_data.append(absolute_time)
+                            ideal_score = query_set[0].start_time.hour * 60 + query_set[0].start_time.minute
+                            ideal_times.append(ideal_score)
+                            if min_score == 0:
+                                min_score =absolute_time
+                            if max_score < absolute_time:
+                                max_score = absolute_time
+                            elif min_score > absolute_time:
+                                min_score = absolute_time
+                            if max_score < ideal_score:
+                                max_score = ideal_score
+                            elif min_score > ideal_score:
+                                min_score = ideal_score
+                        except:
+                            y_data.append("")
+                            ideal_times.append("")
                 else:
                     ideal_times.append(0)
                     if len(query_set)==0:
@@ -286,7 +320,10 @@ class TopView(View):
                                 week_score.append(relative_time)
                             except:
                                 pass
-                        average_score = sum(week_score)//len(week_score)
+                        if len(week_score)!=0:
+                            average_score = sum(week_score)//len(week_score)
+                        else:
+                            average_score = 0
                         if min_score > average_score:
                             min_score = average_score
                         elif max_score < average_score:
@@ -297,8 +334,8 @@ class TopView(View):
                 'xlabels': xlabel_name,
                 'Y_data':y_data,
                 'ideal':ideal_times,
-                'max_score':max_score+60,
-                'min_score':min_score-60,
+                'max_score':max_score//10*10+60,
+                'min_score':min_score//10*10-60,
                 'absolute_or_relative': absolute_or_relative,
                 'day_week_month':day_week_month,
                 'standard_date':standard_date.strftime('%Y--%m--%d'),

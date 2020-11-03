@@ -1,1 +1,43 @@
-{"day_week_month": "month", "absolute_or_relative": "relative"}
+{
+    "xlabels": [
+        "10/25",
+        "10/26",
+        "10/27",
+        "10/28",
+        "10/29",
+        "10/30",
+        "10/31",
+        "11/1",
+        "11/2",
+        "11/3"
+    ],
+    "Y_data": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        96,
+        "",
+        10,
+        10,
+        2
+    ],
+    "ideal": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+    ],
+    "max_score": 150,
+    "min_score": -60,
+    "absolute_or_relative": "relative",
+    "day_week_month": "day",
+    "standard_date": "2020--11--03"
+}

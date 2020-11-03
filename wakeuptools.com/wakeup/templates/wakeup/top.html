@@ -3,29 +3,48 @@
 
 {% block title %}WAKE UP SCHEDULE{% endblock %}
 
-{%block content %}
+{%block all_content %}
+
 <body id="top_body">
   <div class="contents">
-    <form action="/" method="POST">
+
+
+    <div id="LineChart" class="Graph">
+      <canvas id="myLineChart" ></canvas>
+    </div>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+    <form action="/" method="POST" name="subm_form">
         {% csrf_token %}
         <input type='hidden' name="day_week_month" value={{day_week_month}}/>
         <input type='hidden' name="absolute_or_relative" value={{absolute_or_relative}}/>
         <input type='hidden' name="standard_date" value={{standard_date}}/>
-
-        <input type="submit" value="absolute" name='absolute_button' id="absolute_button_id">
-        <input type="submit" value="relative" name='relative_button' id="relative_button_id">
-        <input type="submit" value="month" name='month_button' id="month_button_id">
-        <input type="submit" value="week" name='week_button' id="week_button_id">
-        <input type="submit" value="day" name='day_button' id="day_button_id">
-        <input type="submit" value="next" name='next_button' id="next_button_id">
-        <input type="submit" value="before" name='before_button' id="before_button_id">
+        <input type="submit" value=" Day " name='day_button' id="day_button_id">
+        <input type="submit" value="Week" name='week_button' id="week_button_id">
+        <input type="submit" value="Month" name='month_button' id="month_button_id">
+        <input type="submit" value="Before" name='before_button' id="before_button_id">
+        <input type="submit" value=" Next " name='next_button' id="next_button_id">
+        <select name="ab_or_re" id="ab_or_re_id" onchange="submiFunc(this);">
+          {% if  absolute_or_relative == 'absolute'%}
+          <option value="absolute" name='absolute_button' id="absolute_button_id">起床時間と目標時間を表示</option>
+          <option value="relative" name='relative_button' id="relative_button_id">目標時間と起床時間との差を表示</option>
+          {% else %}
+          <option value="relative" name='relative_button' id="relative_button_id">目標時間と起床時間との差を表示</option>
+          <option value="absolute" name='absolute_button' id="absolute_button_id">起床時間と目標時間を表示</option>
+          {% endif %}
+        </select>
+        <h6 id='select_label_id'>表示形式:</h6>
     </form>
 
-    <canvas id="myLineChart"></canvas>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
   </div>
+
 </body>
   <script>
+  function submiFunc(obj) {
+    index = document.subm_form.ab_or_re.selectedIndex;
+    obj.form.ab_or_re.value = document.subm_form.ab_or_re.options[index].value;
+    obj.form.submit();
+  }
+
   let Y_data = {{Y_data|safe}}
   let ideal = {{ideal|safe}}
   for (var i=0 ;i < Y_data.length;i++){
@@ -64,8 +83,8 @@
     options: {
       spanGaps: true,
       title: {
-        display: true,
-        text: '気温（8月1日~8月7日）'
+        display: false,
+        text: '気温（8月1日~8月7日)'
       }
 
       ,
@@ -81,7 +100,10 @@
                 if (value%60==0){
                   return String((value-value%60)/60) +':'+String(value%60)+"0";
                 }
+                else if (value%10==0){
                   return String((value-value%60)/60) +':'+String(value%60);
+                }
+                  return String((value-value%60)/60) +':'+'0'+String(value%60);
               }
               {% else %}
                 return String(value) +'分';

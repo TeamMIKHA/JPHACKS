@@ -93,19 +93,26 @@ AIを活用して人間の起床を管理するプログラムと起床を促す
 ## 開発技術
 ### 活用した技術
 #### API・データ
-* AWS
 * COCOデータセット
 
 #### フレームワーク・ライブラリ・モジュール
+アプリケーション関連
 * Django
+* PostgerSQL
+* AWS
+* nginx
+
+デバイス関連
 * Darknet
 * 赤外線モジュール
 * 圧力センサ
 * サーボモータ
+
+言語
 * Python
 * JavaScript
 * C++
-* Chart.js
+
 
 #### デバイス
 * Arduino

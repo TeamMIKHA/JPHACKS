@@ -24,7 +24,7 @@
 
 #### システム
 本サービスのデバイス構成はこちらのようになっています。
-[README資料.pptx](https://github.com/TeamMIKHA/JPHACKS/files/5500082/README.pptx)
+![構成図1](https://user-images.githubusercontent.com/73453598/98344625-dbb0b780-2056-11eb-8935-f7b26ac390a2.png)
 また、システムの主な流れは，
 
 1. 毎日0時頃にwebアプリケーションから時間や起床方法情報を取得。

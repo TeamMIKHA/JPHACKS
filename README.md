@@ -134,6 +134,10 @@ smarm/wakeup/views.py
 OPTIONページの，スイッチ切り替えによる特定ボタンの無効化部分
 smarm/wakeup/templates/wakeup/howto.html
 
+PC部分の異なる方法、異なるデバイス、異なるデータ形式との通信部分である
+パソコン/connect_arduino.py
+パソコン/connect_jetson.py
+パソコン/connect_server.py
 
 
 #### 製品に取り入れた研究内容（データ・ソフトウェアなど）（※アカデミック部門の場合のみ提出必須）

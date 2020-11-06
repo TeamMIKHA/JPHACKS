@@ -1,6 +1,6 @@
 # SMARM
 
-[![IMAGE SMARM](https://www.youtube.com/watch?v=IIMCaGkYzOM&feature=youtu.be)](https://www.youtube.com/watch?v=G5rULR53uMk)
+[![IMAGE SMARM](https://user-images.githubusercontent.com/73453598/98379694-ed13b700-208a-11eb-8032-d70412bbb94f.png)](https://www.youtube.com/watch?v=IIMCaGkYzOM&feature=youtu.be)
 
 ## 製品概要
 目覚まし×Tech

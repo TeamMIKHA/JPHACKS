@@ -17,10 +17,13 @@ AIを活用して人間の起床を管理するプログラムと起床を促す
 時間の設定方法は様々で、
 * 1日毎に予定と合わせて設定
 ![Smart Alarm - Google Chrome 2020-11-06 14-39-58 (3)](https://user-images.githubusercontent.com/73453598/98354102-9b0b6b00-2063-11eb-9a10-a9e14fe3c861.gif)
+
 * 複数の予定を一度に設定
 ![Smart Alarm - Google Chrome 2020-11-06 14-41-29 (3)](https://user-images.githubusercontent.com/73453598/98354194-ba09fd00-2063-11eb-9362-0ba556e25528.gif)
+
 * 予定を設定していない日に目覚ましを掛けるかどうかの設定
-![Smart Alarm - Google Chrome 2020-11-06 14-39-58 (3)](https://user-images.githubusercontent.com/73453598/98354304-dc037f80-2063-11eb-8e4c-c9b328eb58fb.gif)
+![Smart Alarm - Google Chrome 2020-11-06 14-44-25 (3)](https://user-images.githubusercontent.com/73453598/98354458-1705b300-2064-11eb-97bf-588dac15cdb8.gif)
+
 このように使用者のニーズに合わせた時間や目覚まし方法の設定が可能です。
 
 2.設定した時間と方法で目覚ましを開始します。
